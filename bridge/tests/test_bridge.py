@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from app.config import Config
 from app.logging_config import SecretRedactionFilter
 from app.main import LocalIdempotency
+from app.ibkr import contracts as contract_module
 from app.polling.site_client import _retry_after, canonical_signature
 from app.risk.local_guard import RiskGuardError, validate_order_command
 
@@ -49,6 +50,57 @@ def config(**overrides: object) -> Config:
 
 
 class BridgeTests(unittest.TestCase):
+    def test_stock_contract_omits_derivative_fields(self) -> None:
+        class FakeContract:
+            pass
+
+        original_contract = contract_module.Contract
+        contract_module.Contract = FakeContract
+        try:
+            contract = contract_module.contract_from_payload({
+                "symbol": "TSM",
+                "sec_type": "STK",
+                "exchange": "SMART",
+                "currency": "USD",
+                "expiry": "20360909",
+                "strike": 100,
+                "outcome": "LONG",
+                "trading_class": "TSM",
+            })
+        finally:
+            contract_module.Contract = original_contract
+
+        self.assertEqual(contract.symbol, "TSM")
+        self.assertEqual(contract.secType, "STK")
+        self.assertFalse(hasattr(contract, "lastTradeDateOrContractMonth"))
+        self.assertFalse(hasattr(contract, "right"))
+        self.assertFalse(hasattr(contract, "strike"))
+        self.assertFalse(hasattr(contract, "tradingClass"))
+
+    def test_qualified_stock_uses_conid_as_authoritative_identity(self) -> None:
+        class FakeContract:
+            pass
+
+        original_contract = contract_module.Contract
+        contract_module.Contract = FakeContract
+        try:
+            contract = contract_module.contract_from_payload({
+                "conid": 123456,
+                "symbol": "SU",
+                "sec_type": "STK",
+                "exchange": "SBF",
+                "currency": "EUR",
+                "expiry": "20360909",
+            })
+        finally:
+            contract_module.Contract = original_contract
+
+        self.assertEqual(contract.conId, 123456)
+        self.assertEqual(contract.symbol, "")
+        self.assertEqual(contract.exchange, "SBF")
+        self.assertEqual(contract.currency, "EUR")
+        self.assertFalse(hasattr(contract, "lastTradeDateOrContractMonth"))
+
     def test_probability_normalization_is_represented_by_single_outcome_price(self) -> None:
         yes = 0.62
         self.assertAlmostEqual(1 - yes, 0.38)
