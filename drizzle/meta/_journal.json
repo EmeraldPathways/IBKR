@@ -1,0 +1,55 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1788639904435,
+      "tag": "0000_calm_microbe",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1788641409918,
+      "tag": "0001_overrated_chamber",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1788642251871,
+      "tag": "0002_flowery_skreet",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1788646943784,
+      "tag": "0003_heavy_shriek",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1788648149652,
+      "tag": "0004_curly_inhumans",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1788648321125,
+      "tag": "0005_numerous_goliath",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1788700000000,
+      "tag": "0007_luna_helper",
+      "breakpoints": true
+    }
+  ]
+}
