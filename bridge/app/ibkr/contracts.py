@@ -28,17 +28,30 @@ def contract_from_payload(payload: dict[str, Any]) -> Any:
     contract = Contract()
     contract.conId = int(payload.get("conid") or payload.get("ibkr_conid") or 0)
     contract.symbol = str(payload.get("symbol", ""))
-    contract.secType = str(payload.get("sec_type", payload.get("secType", "OPT")))
+    contract.secType = str(payload.get("sec_type", payload.get("secType", "OPT"))).upper()
     contract.exchange = str(payload.get("exchange", ""))
     contract.currency = str(payload.get("currency", "USD"))
-    contract.lastTradeDateOrContractMonth = str(payload.get("expiry", payload.get("last_trade_date_or_contract_month", "")))
-    outcome = str(payload.get("outcome", "YES")).upper()
-    contract.right = "C" if outcome == "YES" else "P"
-    contract.strike = float(payload.get("strike", 0) or 0)
-    if payload.get("trading_class"):
-        contract.tradingClass = str(payload["trading_class"])
-    if payload.get("local_symbol"):
-        contract.localSymbol = str(payload["local_symbol"])
+    if payload.get("primary_exchange"):
+        contract.primaryExchange = str(payload["primary_exchange"])
+
+    # Stock contracts must not carry derivative-only fields. IBKR treats an
+    # STK request with an expiry/right/strike as a different (and invalid)
+    # security definition, which produces error 200 during qualification and
+    # market-data requests.
+    if contract.secType != "STK":
+        contract.lastTradeDateOrContractMonth = str(payload.get("expiry", payload.get("last_trade_date_or_contract_month", "")))
+        outcome = str(payload.get("outcome", "YES")).upper()
+        contract.right = "C" if outcome == "YES" else "P"
+        contract.strike = float(payload.get("strike", 0) or 0)
+        if payload.get("trading_class"):
+            contract.tradingClass = str(payload["trading_class"])
+        if payload.get("local_symbol"):
+            contract.localSymbol = str(payload["local_symbol"])
+    elif contract.conId:
+        # Once qualification has supplied a conId it is the authoritative
+        # identity. Avoid adding symbol/class constraints that can conflict
+        # with the resolved IBKR contract.
+        contract.symbol = ""
     return contract
 
 
